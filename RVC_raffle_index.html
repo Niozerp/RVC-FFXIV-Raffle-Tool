@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <link rel=”stylesheet” href=”https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css”>
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+</head>
+<style>
+    body{
+        background-color: #9b59b6;
+    }
+
+    #memberInputContainer {
+        outline: solid;
+        text-align: center;
+        padding-right: 200px;
+    }
+
+    .label{
+        font-size: 30px;
+        
+        color: white;
+        -webkit-text-stroke: #27ae60;
+        -webkit-text-stroke-width: 1px;
+    }
+
+    .addBtn{
+        background-color: #2980b9;
+        box-shadow: gray;
+    }
+
+    #BallContainer{
+        z-index: -1;
+        position: absolute;
+        margin-top: 5px;
+        margin-left: 3px;
+        outline: dashed;
+        width: 750px;
+        height: 800px;
+    }
+
+    #rightContainer{
+        text-align: right;
+        width: 50%;
+        display: absolute;
+        
+    }
+
+    #NameDisplay{
+        
+        margin-top: 0px;
+        width: 50%;
+        position: absolute;
+        display: inline-block;
+
+        top: 70px;
+        right: 475px;
+    }
+
+    #winnerDisplay{
+        
+        margin-top: 5px;
+        width: 50%;
+        display: inline-block;
+
+    }
+
+    #memberEntry{
+        position: relative;
+        display: inline-block;
+    }
+
+    .ball{
+        position: absolute;
+        border-radius: 100%;
+        height: 25px;
+        width: 25px;
+        background-image: linear-gradient(pink, purple);
+    }
+
+    .searchMemberList{
+        width: 265px;
+        position: absolute;
+        list-style: none;
+        text-decoration: none;
+        top: 26px;
+        left: 1px;
+        outline: 1px solid pink;
+        text-align: left;
+        padding-left: 0;
+    }
+
+    .searchMemberList li{
+        background-color: powderblue;
+        border-bottom: 1px solid black;
+        display: block;
+        padding: 4px 8px;
+        text-align: left;
+    }
+
+    #pickWinnerBtn{
+        position: absolute;
+        width: 100%;
+        height: 40px;
+        text-align: center;
+        margin-top: 815px;
+    }
+
+    #results{
+        z-index: 3;
+    }
+
+    .entry-adjustment{
+        display: none;
+    }
+
+    .check-hover:hover{
+        background-color: pink;
+    }
+
+    .entries-counter{
+        text-align: left;
+        float: left;
+        margin-left: 200px;
+        font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+        font-size: 25px;
+        
+        color: #ecf0f1;
+    }
+
+    .winnerList{
+        outline: hotpink;
+        outline-style: solid;
+        font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+        color: hotpink;
+        background-color: lawngreen;
+        margin-left: 330px;
+        width: 200px;
+        text-align: center;
+        border-radius: 25px;
+        margin-top: 12px;
+    }
+
+    .entered-names{
+        outline: purple;
+        outline-style: groove;
+        border-radius: 25px;
+        width: 200px;
+        margin-left: 770px;
+        text-align: center;
+        background-color: #e74c3c;
+    }
+
+    .adjustment-input{
+        width: 50px;
+    }
+
+    .cancel-btn:hover{
+        color: crimson;
+    }
+
+    .under-auto-complete{
+        z-index: -1;
+    }
+
+</style>
+<body>
+    <div id="main">
+        <img src="https://drive.google.com/file/d/166G9-vIMqIEmL8JGaoPTDDEI8524GBqS/view">
+        <div id="memberInputContainer">
+            <span class="entries-counter">Total Entries: {{ballCount}}</span>
+            <label class="label">FC Member Name:</label>
+            <div id="memberEntry">
+                <div id="inputTextBox">
+                    <input id="memberNameInputField" type="text" placeholder="User Name" v-model="memberNameInput"/>
+                </div>
+                <div id="results" v-if="searching == true">
+                    <ul v-if="memberNameInput != '' && memberNameInput.length > 1" class="searchMemberList">
+                        <li v-for="(member, index) in FCMembers" v-if="member.toUpperCase().includes(memberNameInput.toUpperCase())" class="" @click="selectMember(index)">
+                            <span class="memberResult">{{member}}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <label class="label">Entries:</label>
+            <input type="number" placeholder="0" min="1" max="25" v-model="memberEntryNumber">
+            <div class="w3-button label addBtn" @click="addMemberToRaffle">Add</div>
+        </div>
+        <div id=middleContainer>
+            <div id="BallContainer">
+
+            </div>
+            <div id="rightContainer">  
+              <span class="under-auto-complete" id="winnerDisplay">
+                <label class="label">Winners:</label>
+                <div class="winnerList" v-for="winner in winners" v-if="winners.length>0">
+                    {{winner}}
+                </div>
+             </span>
+             <span class="under-auto-complete" id="NameDisplay">
+                <label class="label">Entered:</label>
+                <div class="under-auto-complete entered-names" v-for="(member, index) in memberDisplayArr" v-if="memberDisplayArr.length>0">
+                    <span>
+                        <span @click="displayAdjuster(index)">{{member.Name}}</span>
+                        <span class="entry-adjustment">
+                            <input class="adjustment-input" v-model="member.Entries" type="number"  min="1" max="25"/>
+                            <i class="fas fa-check check-hover" @click="hideAdjuster(index, member.Entries)"></i>
+                        </span>
+                        <span>{{member.Entries}}</span>
+                        
+                    </span>
+                    
+                    <i class="fas fa-times-circle cancel-btn" @click="removeMember(index)"></i>
+                </div>
+            </span>
+        </div>
+    </div>
+  <div id="pickWinnerBtn" class="w3-button w3-teal" @click="pickWinner">Roll For Winner!!! {{winner}}</div>
+</div>
+
+    
+
+</body>
+
+<script>
+    var app = new Vue({
+        el: '#main',
+        data: {
+            memberNames: [],
+            memberDisplayArr: [],
+            memberNameInput: '',
+            memberEntryNumber: 0,
+            FCMembers: [],
+            resultDump: [],
+            searching: false,
+            winner: '',
+            ballCount: 0,
+            winners: [],
+        },
+        methods: {
+            
+            displayAdjuster(index){
+                var adjusters = $(".entry-adjustment");
+                adjusters[index].style.display = 'initial';
+            },
+
+            hideAdjuster(index, entries){
+                var adjusters = $(".entry-adjustment");
+                adjusters[index].style.display = 'none';
+                var member = this.memberDisplayArr[index].Name
+                this.memberDisplayArr.splice(index,1);
+                this.memberDisplayArr.push({"Name":member,"Entries":entries});
+            },
+
+            pickWinner(){
+
+                this.memberDisplayArr.forEach(element => {
+                    var counter = 0;
+                    while(counter<element.Entries){
+                        app.memberNames.push(element.Name);
+                        counter++;
+                    }
+                });
+
+                this.winner = this.memberNames[this.memberNames.length * Math.random() | 0];
+                this.winners.push(this.winner);
+                i = this.memberDisplayArr.findIndex(o => o.Name == this.winner);
+                this.removeMember(i);
+                this.memberNames = [];
+
+            },
+
+
+            selectMember(i){
+                this.memberNameInput = this.FCMembers[i];
+                this.searching = false;
+            },
+
+            removeMember(i){
+                this.memberDisplayArr.splice([i],1);
+            },
+
+            addMemberToRaffle()
+            {
+                var entry = app.memberNameInput;
+                var entries = app.memberEntryNumber;
+
+                this.memberDisplayArr.push({"Name":entry,"Entries":entries});
+
+                app.memberNameInput = '';
+                app.memberEntryNumber = 0;
+            },
+
+            getFCMembers()
+            {
+                var xhttp = new XMLHttpRequest();
+                xhttp.onreadystatechange = function (){
+                    if(this.readyState == 4 && this.status == 200){
+                        app.resultDump = JSON.parse(xhttp.responseText);
+                            
+                        app.resultDump.FreeCompanyMembers.forEach(function(element){
+                            app.FCMembers.push(element.Name);
+                        });
+
+                    }
+                }
+
+                xhttp.open("GET", "https://xivapi.com/freecompany/9228579323924048532?data=FCM", true);
+                xhttp.send();
+
+            },
+
+
+        },
+        created() {
+            this.getFCMembers();
+
+        },
+        mounted() {
+           
+        },
+
+        watch: {
+
+            FCMembers: function(){
+        
+
+            },
+
+            memberNameInput: function(){
+                this.searching = true;
+                //console.log($(".memberResult"))
+                $(".memberResult").each(function(i, e){
+                    if(e.innerText == app.memberNameInput){
+                        app.searching = false;
+                    }
+                });
+                
+            },
+
+            memberDisplayArr: function(){
+                var memberEntries = 0;
+                app.memberDisplayArr.forEach(element => {
+                    memberEntries += parseInt(element.Entries);
+                })
+
+                while(app.ballCount>memberEntries){
+                    app.ballCount--;
+                    remove_ball();
+
+                    if(app.ballCount>balls.length&&balls.length<800){
+                        add_ball()
+                    }
+                }
+
+                while(app.ballCount<memberEntries){
+                    app.ballCount++;
+                    if(balls.length<800){
+                        add_ball();
+                    }
+                }
+
+            },
+        },
+    })
+
+    const balls = [];
+    var container = $("#BallContainer");
+    const FIELD_WIDTH = container.width();
+    const FIELD_HEIGHT = container.height();
+    var gravity = 0.2;
+    var friction = 0.98;
+
+    //load code after window loads
+    window.onload = init;
+
+    function init() {
+        setInterval(tick, 1000/72); //60 frames per second
+    }
+
+    function tick(){
+        balls.forEach(ball =>{
+            // // Bounce off walls
+            // // if(ball.x < ball.radius / 2) {
+            // //     ball.x = ball.radius / 2;
+            // //     ball.direction = angleReflect(ball.direction, 90);
+
+            // // }
+
+            // if(ball.x > FIELD_WIDTH - ball.radius / 2) {
+            //     // ball.x = FIELD_WIDTH - ball.radius / 2;
+            //     ball.dx -= ball.dx * friction; //angleReflect(ball.direction, 90);
+            // } 
+
+            // // if(ball.y < ball.radius / 2) {
+            // //     ball.y = ball.radius / 2;
+            // //     ball.direction = angleReflect(ball.direction, 0);
+            // // }
+
+            // if(ball.y > FIELD_HEIGHT - ball.radius / 2) {
+            //     // ball.y = FIELD_HEIGHT - ball.radius / 2;
+            //     // ball.direction = angleReflect(ball.direction, 0);
+            //     ball.dy = -ball.dy;
+            //     ball.dy = ball.dy * friction;
+            //     ball.dx = ball.dx * friction;
+            // }else{
+            //     ball.dy += gravity;
+            // }
+            if(ball.x > FIELD_WIDTH - ball.radius){
+		        ball.dx *= ball.e;
+               
+		        ball.x = FIELD_WIDTH - ball.radius;
+	        }
+
+	        if(ball.y > FIELD_HEIGHT - ball.radius){
+		        //ball.dy *= ball.e;
+                ball.dy = -ball.dy;
+                ball.dy = ball.dy * friction;
+                ball.dx = ball.dx * friction;
+		        ball.y = FIELD_HEIGHT - ball.radius;
+	        }else{
+                ball.dy += gravity;
+            }
+
+	        if(ball.x < ball.radius){
+		        ball.dx *= ball.e;
+		        ball.x = ball.radius;
+	        }
+
+	        if(ball.y < ball.radius){
+		        ball.dy *= ball.e;
+		        ball.y = ball.radius;
+	        }
+            // Collision
+            balls.forEach(otherBall => {
+                if(ball.id != otherBall.id) {
+                    if(distance(ball.x + ball.radius / 2, ball.y + ball.radius / 2, otherBall.x + otherBall.radius / 2, otherBall.y + otherBall.radius / 2) < ball.radius) {
+                      //pythagoras 
+				        // var distX = ball.x - otherBall.x;
+				        // var distY = ball.y - otherBall.y;
+				        // var d = Math.sqrt((distX) * (distX) + (distY) * (distY));
+                        
+                        // var nx = (otherBall.x - ball.x) / d;
+					    // var ny = (otherBall.y - ball.y) / d;
+					    // var p = 2 * (ball.dx * nx + ball.dy * ny - otherBall.dx * nx - otherBall.dy * ny);
+                        
+                        // calulating the point of collision 
+					    // var colPointX = ((ball.x * otherBall.radius) + (otherBall.x * ball.radius)) / (ball.radius + otherBall.radius);
+					    // var colPointY = ((ball.y * otherBall.radius) + (otherBall.y * ball.radius)) / (ball.radius + otherBall.radius);
+
+                        //stoping overlap 
+					    // ball.x = colPointX + ball.radius;// * (ball.x - otherBall.x) / d;
+					    // ball.y = colPointY + ball.radius;// * (ball.y - otherBall.y) / d;
+					    // otherBall.x = colPointX + otherBall.radius;// * (otherBall.x - ball.x) / d;
+					    // otherBall.y = colPointY + otherBall.radius;// * (otherBall.y - ball.y) / d;
+
+
+                        
+                        // ball.dx -= (p *  nx)*gravity; 
+                        // ball.dy -= (p *  ny)*gravity; 
+                        // otherBall.dx += (p * nx)*gravity;
+                        // otherBall.dy += (p * ny)*gravity;
+                        adjustPositions(ball, otherBall);
+                        resolveCollision(ball, otherBall);
+                    }
+                }
+            });
+    
+     
+    
+            if(ball.dx <= 0.1 && ball.dy <= 0.1 && ball.y >= FIELD_HEIGHT-15){
+                ball.dx = 0;
+                ball.dy = 0;
+            } 
+    
+            // Update object position
+            ball.x += ball.dx;//Math.cos(degtorad(ball.direction)) * ball.speed;
+            ball.y += ball.dy;//Math.sin(degtorad(ball.direction)) * ball.speed;
+    
+            // Update screen position
+            ball.$element[0].style.left = ball.x + 'px';
+            ball.$element[0].style.top = ball.y + 'px';
+        });
+    }
+
+function resolveCollision(ballA, ballB) {
+	var relVel = [ballB.dx - ballA.dx,ballB.dy - ballA.dy];
+	var norm = [ballB.x - ballA.x, ballB.y - ballA.y];
+	var mag = Math.sqrt(norm[0]*norm[0] + norm[1]*norm[1]);
+	norm = [norm[0]/mag,norm[1]/mag];
+	
+	var velAlongNorm = relVel[0]*norm[0] + relVel[1]*norm[1];
+	if(velAlongNorm > 0)
+		return;
+	
+	var bounce = 0.7;
+	var j = -(1 + bounce) * velAlongNorm;
+	j /= 1/ballA.radius + 1/ballB.radius;
+	
+	var impulse = [j*norm[0],j*norm[1]];
+	ballA.dx -= 1/ballA.radius * impulse[0];
+	ballA.dy -= 1/ballA.radius * impulse[1];
+	ballB.dx += 1/ballB.radius * impulse[0];
+	ballB.dy += 1/ballB.radius * impulse[1];
+}
+
+function adjustPositions(ballA,ballB) { //Inefficient implementation for now
+	const percent = 0.2;
+	const slop = 0.01;
+	var correction = (Math.max(slop, 0) / (1/ballA.radius + 1/ballB.radius)) * percent;
+	
+	var norm = [ballB.x - ballA.x, ballB.y - ballA.y];
+	var mag = Math.sqrt(norm[0]*norm[0] + norm[1]*norm[1]);
+	norm = [norm[0]/mag,norm[1]/mag];
+	correction = [correction*norm[0],correction*norm[1]];
+	ballA.x -= 1/ballA.radius * correction[0];
+	ballA.y -= 1/ballA.radius * correction[1];
+	ballB.x += 1/ballB.radius * correction[0];
+	ballB.y += 1/ballB.radius * correction[1];
+}
+
+function distance(x1, y1, x2, y2) {
+  var a = x1 - x2;
+  var b = y1 - y2;
+
+  return Math.sqrt( a*a + b*b );
+}
+
+function angle(x1, y1, x2, y2) {
+  return radtodeg(Math.atan2(y2 - y1, x2 - x1));
+}
+
+function radtodeg(radians) { return radians * (180/Math.PI);}
+function degtorad(degrees) { return degrees * (Math.PI/180); }
+
+function angleReflect(incidenceAngle, surfaceAngle){
+  var a = surfaceAngle * 2 - incidenceAngle;
+  return a >= 360 ? a - 360 : a < 0 ? a + 360 : a;
+}
+
+
+function add_ball(){
+    var container = $("#BallContainer");
+    var newBall = document.createElement("div");
+    newBall.classList.add("ball");
+    container.append(newBall);
+    id = balls.length;
+
+    const ball = {};
+    ball.$element = $(newBall);
+    ball.$element.on('mouseover', function(e){
+        ball.dx += getRandomNumber(-30, 30);
+        ball.dy = getRandomNumber(-15,-55);
+    });
+    ball.id = id;
+    ball.x = getRandomNumber(5, (FIELD_WIDTH-5));
+    ball.y = 10;
+    ball.e = -0.7
+    ball.radius = ball.$element.width();//parseInt(getComputedStyle(newBall).getPropertyValue('width'));
+    ball.dx= 0;
+    //come back to this
+    ball.dy = 2;
+
+    balls.push(ball);
+	//assign_ball_physics(i,newBall);
+}
+
+function remove_ball(){
+    balls.splice(0,1);
+    var htmlBalls = $('.ball');
+    htmlBalls[0].remove();             
+}
+
+function getRandomNumber(min, max) {
+    return Math.floor(Math.random() * (max - min + 1) + min);
+}
+
+</script>
+</html>
